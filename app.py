@@ -1,202 +1,420 @@
-
-import streamlit as st
-import tensorflow as tf
-from PIL import Image
-import numpy as np
-import gdown
-import os
-
-# Define the file ID
-file_id = "1rxYyR9wI85nOQ5WfgTBM7jOhINnDLvdS"
-
-# Construct the full URL to the file
-url = f"https://drive.google.com/uc?id={file_id}"
-
-# Download the file
-output = "leaf_disease_detection.h5"
-if not os.path.exists(output):
-    gdown.download(url, output, quiet=False)
-
-# Page configuration
-st.set_page_config(
-    page_title="Leaf Disease Detection",
-    page_icon="🌱",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
-# Language selection dropdown (no typing option)
-language = st.sidebar.selectbox("Choose Language / भाषा चुनें / భాషను ఎంచుకోండి",
-                                options=["English", "Hindi", "Telugu"])
-
-# Text content in different languages
-content = {
-    "English": {
-        "title": "🌿 Plant Disease Detection",
-        "description": "Identify plant diseases with high accuracy using AI-powered technology.",
-        "about_header": "About",
-        "about_content": "This app uses a Convolutional Neural Network (CNN) model to detect diseases in plant leaves. The model was trained on a large dataset of plant images and can accurately identify several types of plant diseases.",
-        "how_to_use_header": "How to Use",
-        "instructions": ["1. Upload a clear image of a plant leaf.",
-                         "2. Wait for the model to process the image.",
-                         "3. View the predicted disease name on the main screen."],
-        "species_header": "Available Species",
-        "species": [
-            "1. Apple", "2. Blueberry", "3. Cherry", "4. Corn", "5. Grape",
-            "6. Orange", "7. Peach", "8. Pepper", "9. Potato", "10. Raspberry",
-            "11. Soybean", "12. Squash", "13. Strawberry", "14. Tomato"
-        ],
-        "upload_prompt": "Choose a leaf image...",
-        "predicted": "Predicted Disease:",
-        "analyzing": "Analyzing... Please wait",
-        "footer": "Powered by RAGHU ENGINEERING COLLEGE | Created by Batch 3 team -CSM"
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyMzWS7rAFamfkkBgTahHCqr",
+      "include_colab_link": true
     },
-    "Hindi": {
-        "title": "🌿 पौधों के रोग पहचान",
-        "description": "एआई-संचालित तकनीक का उपयोग करके पौधों के रोगों की सटीक पहचान करें।",
-        "about_header": "के बारे में",
-        "about_content": "यह ऐप पौधों की पत्तियों में रोगों का पता लगाने के लिए एक कन्वोल्यूशनल न्यूरल नेटवर्क (CNN) मॉडल का उपयोग करता है।",
-        "how_to_use_header": "कैसे इस्तेमाल करे",
-        "instructions": ["1. पौधे की पत्ती की एक स्पष्ट छवि अपलोड करें।",
-                         "2. मॉडल के छवि को प्रोसेस करने का इंतजार करें।",
-                         "3. मुख्य स्क्रीन पर अनुमानित रोग का नाम देखें।"],
-        "species_header": "उपलब्ध प्रजातियां",
-        "species": [
-            "1. सेब", "2. ब्लूबेरी", "3. चेरी", "4. मक्का", "5. अंगूर",
-            "6. संतरा", "7. आड़ू", "8. मिर्च", "9. आलू", "10. रास्पबेरी",
-            "11. सोयाबीन", "12. स्क्वैश", "13. स्ट्रॉबेरी", "14. टमाटर"
-        ],
-        "upload_prompt": "पत्ती की छवि चुनें...",
-        "predicted": "अनुमानित रोग:",
-        "analyzing": "विश्लेषण हो रहा है... कृपया प्रतीक्षा करें",
-        "footer": "रघु इंजीनियरिंग कॉलेज द्वारा संचालित | बैच 3 टीम - CSM द्वारा निर्मित"
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
     },
-    "Telugu": {
-        "title": "🌿 మొక్కల వ్యాధి గుర్తింపు",
-        "description": "AI ఆధారిత సాంకేతికతను ఉపయోగించి మొక్కల వ్యాధులను ఖచ్చితంగా గుర్తించండి.",
-        "about_header": "గురించి",
-        "about_content": "ఈ యాప్ మొక్కల ఆకుల్లో వ్యాధులను గుర్తించడానికి కన్‌వల్యూషనల్ న్యూరల్ నెట్‌వర్క్ (CNN) మోడల్‌ని ఉపయోగిస్తుంది.",
-        "how_to_use_header": "వినియోగించడానికి ఎలా",
-        "instructions": ["1. మొక్క ఆకుని స్పష్టమైన చిత్రం అప్‌లోడ్ చేయండి.",
-                         "2. మోడల్ చిత్రాన్ని ప్రాసెస్ చేసే వరకు వేచి ఉండండి.",
-                         "3. ప్రధాన స్క్రీన్‌లో అంచనా వ్యాధి పేరును చూడండి."],
-        "species_header": "అందుబాటులో ఉన్న జాతులు",
-        "species": [
-            "1. ఆపిల్", "2. బ్లూబెర్రీ", "3. చెర్రీ", "4. మొక్కజొన్న", "5. ద్రాక్ష",
-            "6. నారింజ", "7. పీచ్", "8. పెప్పర్", "9. బంగాళాదుంప", "10. రాస్ప్బెర్రీ",
-            "11. సోయాబీన్", "12. స్క్వాష్", "13. స్ట్రాబెర్రీ", "14. టమోటా"
-        ],
-        "upload_prompt": "ఒక ఆకు చిత్రాన్ని ఎంచుకోండి...",
-        "predicted": "అంచనా వ్యాధి:",
-        "analyzing": "విశ్లేషణ జరుగుతోంది... దయచేసి వేచి ఉండండి",
-        "footer": "రఘు ఇంజినీరింగ్ కాలేజ్ ద్వారా నిర్వహించబడుతుంది | బ్యాచ్ 3 టీం - CSM ద్వారా రూపొందించబడింది"
+    "language_info": {
+      "name": "python"
     }
-}
-
-# Add a header and a logo/banner
-st.image(
-    "https://st4.depositphotos.com/1054144/24138/i/450/depositphotos_241389492-stock-photo-young-plant-in-sunlight.jpg",
-    width=100)
-st.title(content[language]["title"])
-st.markdown(f"## {content[language]['description']}")
-
-# Sidebar settings
-st.sidebar.header(content[language]["about_header"])
-st.sidebar.markdown(content[language]["about_content"])
-
-st.sidebar.header(content[language]["how_to_use_header"])
-# Display instructions in a vertical list with numbering
-for instruction in content[language]["instructions"]:
-    st.sidebar.markdown(f"- {instruction}")
-
-st.sidebar.header(content[language]["species_header"])
-# Display species in a vertical list with numbering
-for species in content[language]["species"]:
-    st.sidebar.markdown(f"- {species}")
-
-# Upload an image file
-uploaded_file = st.file_uploader(content[language]["upload_prompt"], type=["jpg", "png", "jpeg"])
-
-if uploaded_file is not None:
-    st.image(uploaded_file, caption="Uploaded Image", use_container_width=False, width=400)
-
-    try:
-        st.write(content[language]["analyzing"])
-        model = tf.keras.models.load_model(output)
-
-        def predict_image_class(model, image, class_indices):
-            # Open and resize the image
-            image = Image.open(image)
-            image = image.resize((224, 224))  # Resize to model input size
-            image = np.array(image) / 255.0  # Normalize to [0, 1]
-            image = np.expand_dims(image, axis=0)  # Add batch dimension
-            predictions = model.predict(image)
-            predicted_class = np.argmax(predictions, axis=1)
-            return predicted_class
-
-        class_indices = {
-            0: 'Apple___Apple_scab',
-            1: 'Apple___Black_rot',
-            2: 'Apple___Cedar_apple_rust',
-            3: 'Apple___healthy',
-            4: 'Blueberry___healthy',
-            5: 'Cherry___Powdery_mildew',
-            6: 'Cherry___healthy',
-            7: 'Corn___Cercospora_leaf_spot',
-            8: 'Corn___Common_rust',
-            9: 'Corn___Northern_Leaf_Blight',
-            10: 'Corn___healthy',
-            11: 'Grape___Black_rot',
-            12: 'Grape___Esca_(Black_Measles)',
-            13: 'Grape___Leaf_blight',
-            14: 'Grape___healthy',
-            15: 'Orange___Citrus_greening',
-            16: 'Peach___Bacterial_spot',
-            17: 'Peach___healthy',
-            18: 'Pepper___Bacterial_spot',
-            19: 'Pepper___healthy',
-            20: 'Potato___Early_blight',
-            21: 'Potato___Late_blight',
-            22: 'Potato___healthy',
-            23: 'Raspberry___healthy',
-            24: 'Soybean___healthy',
-            25: 'Squash___Powdery_mildew',
-            26: 'Strawberry___Leaf_scorch',
-            27: 'Strawberry___healthy',
-            28: 'Tomato___Bacterial_spot',
-            29: 'Tomato___Early_blight',
-            30: 'Tomato___Late_blight',
-            31: 'Tomato___Leaf_Mold',
-            32: 'Tomato___Septoria_leaf_spot',
-            33: 'Tomato___Spider_mites',
-            34: 'Tomato___Target_Spot',
-            35: 'Tomato___Tomato_Yellow_Leaf_Curl_Virus',
-            36: 'Tomato___Tomato_mosaic_virus',
-            37: 'Tomato___healthy'
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/balukarthik2003/CNN-based-insights-into-leaf-pathologies/blob/main/app.py\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "pip install streamlit"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "zfU8keuunwGH",
+        "outputId": "4cfdc81a-46d9-40ce-950f-5741eb4faae0"
+      },
+      "execution_count": 1,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Collecting streamlit\n",
+            "  Downloading streamlit-1.42.2-py2.py3-none-any.whl.metadata (8.9 kB)\n",
+            "Requirement already satisfied: altair<6,>=4.0 in /usr/local/lib/python3.11/dist-packages (from streamlit) (5.5.0)\n",
+            "Requirement already satisfied: blinker<2,>=1.0.0 in /usr/local/lib/python3.11/dist-packages (from streamlit) (1.9.0)\n",
+            "Requirement already satisfied: cachetools<6,>=4.0 in /usr/local/lib/python3.11/dist-packages (from streamlit) (5.5.2)\n",
+            "Requirement already satisfied: click<9,>=7.0 in /usr/local/lib/python3.11/dist-packages (from streamlit) (8.1.8)\n",
+            "Requirement already satisfied: numpy<3,>=1.23 in /usr/local/lib/python3.11/dist-packages (from streamlit) (1.26.4)\n",
+            "Requirement already satisfied: packaging<25,>=20 in /usr/local/lib/python3.11/dist-packages (from streamlit) (24.2)\n",
+            "Requirement already satisfied: pandas<3,>=1.4.0 in /usr/local/lib/python3.11/dist-packages (from streamlit) (2.2.2)\n",
+            "Requirement already satisfied: pillow<12,>=7.1.0 in /usr/local/lib/python3.11/dist-packages (from streamlit) (11.1.0)\n",
+            "Requirement already satisfied: protobuf<6,>=3.20 in /usr/local/lib/python3.11/dist-packages (from streamlit) (4.25.6)\n",
+            "Requirement already satisfied: pyarrow>=7.0 in /usr/local/lib/python3.11/dist-packages (from streamlit) (18.1.0)\n",
+            "Requirement already satisfied: requests<3,>=2.27 in /usr/local/lib/python3.11/dist-packages (from streamlit) (2.32.3)\n",
+            "Requirement already satisfied: rich<14,>=10.14.0 in /usr/local/lib/python3.11/dist-packages (from streamlit) (13.9.4)\n",
+            "Requirement already satisfied: tenacity<10,>=8.1.0 in /usr/local/lib/python3.11/dist-packages (from streamlit) (9.0.0)\n",
+            "Requirement already satisfied: toml<2,>=0.10.1 in /usr/local/lib/python3.11/dist-packages (from streamlit) (0.10.2)\n",
+            "Requirement already satisfied: typing-extensions<5,>=4.4.0 in /usr/local/lib/python3.11/dist-packages (from streamlit) (4.12.2)\n",
+            "Collecting watchdog<7,>=2.1.5 (from streamlit)\n",
+            "  Downloading watchdog-6.0.0-py3-none-manylinux2014_x86_64.whl.metadata (44 kB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m44.3/44.3 kB\u001b[0m \u001b[31m1.9 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hRequirement already satisfied: gitpython!=3.1.19,<4,>=3.0.7 in /usr/local/lib/python3.11/dist-packages (from streamlit) (3.1.44)\n",
+            "Collecting pydeck<1,>=0.8.0b4 (from streamlit)\n",
+            "  Downloading pydeck-0.9.1-py2.py3-none-any.whl.metadata (4.1 kB)\n",
+            "Requirement already satisfied: tornado<7,>=6.0.3 in /usr/local/lib/python3.11/dist-packages (from streamlit) (6.4.2)\n",
+            "Requirement already satisfied: jinja2 in /usr/local/lib/python3.11/dist-packages (from altair<6,>=4.0->streamlit) (3.1.5)\n",
+            "Requirement already satisfied: jsonschema>=3.0 in /usr/local/lib/python3.11/dist-packages (from altair<6,>=4.0->streamlit) (4.23.0)\n",
+            "Requirement already satisfied: narwhals>=1.14.2 in /usr/local/lib/python3.11/dist-packages (from altair<6,>=4.0->streamlit) (1.27.1)\n",
+            "Requirement already satisfied: gitdb<5,>=4.0.1 in /usr/local/lib/python3.11/dist-packages (from gitpython!=3.1.19,<4,>=3.0.7->streamlit) (4.0.12)\n",
+            "Requirement already satisfied: python-dateutil>=2.8.2 in /usr/local/lib/python3.11/dist-packages (from pandas<3,>=1.4.0->streamlit) (2.8.2)\n",
+            "Requirement already satisfied: pytz>=2020.1 in /usr/local/lib/python3.11/dist-packages (from pandas<3,>=1.4.0->streamlit) (2025.1)\n",
+            "Requirement already satisfied: tzdata>=2022.7 in /usr/local/lib/python3.11/dist-packages (from pandas<3,>=1.4.0->streamlit) (2025.1)\n",
+            "Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.11/dist-packages (from requests<3,>=2.27->streamlit) (3.4.1)\n",
+            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.11/dist-packages (from requests<3,>=2.27->streamlit) (3.10)\n",
+            "Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.11/dist-packages (from requests<3,>=2.27->streamlit) (2.3.0)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.11/dist-packages (from requests<3,>=2.27->streamlit) (2025.1.31)\n",
+            "Requirement already satisfied: markdown-it-py>=2.2.0 in /usr/local/lib/python3.11/dist-packages (from rich<14,>=10.14.0->streamlit) (3.0.0)\n",
+            "Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /usr/local/lib/python3.11/dist-packages (from rich<14,>=10.14.0->streamlit) (2.18.0)\n",
+            "Requirement already satisfied: smmap<6,>=3.0.1 in /usr/local/lib/python3.11/dist-packages (from gitdb<5,>=4.0.1->gitpython!=3.1.19,<4,>=3.0.7->streamlit) (5.0.2)\n",
+            "Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.11/dist-packages (from jinja2->altair<6,>=4.0->streamlit) (3.0.2)\n",
+            "Requirement already satisfied: attrs>=22.2.0 in /usr/local/lib/python3.11/dist-packages (from jsonschema>=3.0->altair<6,>=4.0->streamlit) (25.1.0)\n",
+            "Requirement already satisfied: jsonschema-specifications>=2023.03.6 in /usr/local/lib/python3.11/dist-packages (from jsonschema>=3.0->altair<6,>=4.0->streamlit) (2024.10.1)\n",
+            "Requirement already satisfied: referencing>=0.28.4 in /usr/local/lib/python3.11/dist-packages (from jsonschema>=3.0->altair<6,>=4.0->streamlit) (0.36.2)\n",
+            "Requirement already satisfied: rpds-py>=0.7.1 in /usr/local/lib/python3.11/dist-packages (from jsonschema>=3.0->altair<6,>=4.0->streamlit) (0.23.0)\n",
+            "Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.11/dist-packages (from markdown-it-py>=2.2.0->rich<14,>=10.14.0->streamlit) (0.1.2)\n",
+            "Requirement already satisfied: six>=1.5 in /usr/local/lib/python3.11/dist-packages (from python-dateutil>=2.8.2->pandas<3,>=1.4.0->streamlit) (1.17.0)\n",
+            "Downloading streamlit-1.42.2-py2.py3-none-any.whl (9.6 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m9.6/9.6 MB\u001b[0m \u001b[31m18.5 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading pydeck-0.9.1-py2.py3-none-any.whl (6.9 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m6.9/6.9 MB\u001b[0m \u001b[31m68.4 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading watchdog-6.0.0-py3-none-manylinux2014_x86_64.whl (79 kB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m79.1/79.1 kB\u001b[0m \u001b[31m4.7 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hInstalling collected packages: watchdog, pydeck, streamlit\n",
+            "Successfully installed pydeck-0.9.1 streamlit-1.42.2 watchdog-6.0.0\n"
+          ]
         }
-
-        predicted_class = predict_image_class(model, uploaded_file, class_indices)
-        predicted_class_name = class_indices.get(predicted_class[0], "Unknown Disease")
-
-        st.write(f"**{content[language]['predicted']}** {predicted_class_name}")
-    except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
-
-# Footer with dynamic content
-st.markdown(f"""
-<style>
-footer {{
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background-color: #f1f1f1;
-    color: #333;
-    text-align: center;
-    padding: 10px;
-}}
-</style>
-<footer>
-    <p>{content[language]["footer"]}</p>
-</footer>
-""", unsafe_allow_html=True)
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "import streamlit as st\n",
+        "import tensorflow as tf\n",
+        "from PIL import Image\n",
+        "import numpy as np\n",
+        "import gdown\n",
+        "import os\n",
+        "\n",
+        "# Define the file ID\n",
+        "file_id = \"1rxYyR9wI85nOQ5WfgTBM7jOhINnDLvdS\"\n",
+        "\n",
+        "# Construct the full URL to the file\n",
+        "url = f\"https://drive.google.com/uc?id={file_id}\"\n",
+        "\n",
+        "# Download the file\n",
+        "output = \"leaf_disease_detection.h5\"\n",
+        "if not os.path.exists(output):\n",
+        "    gdown.download(url, output, quiet=False)\n",
+        "\n",
+        "# Page configuration\n",
+        "st.set_page_config(\n",
+        "    page_title=\"Leaf Disease Detection\",\n",
+        "    page_icon=\"🌱\",\n",
+        "    layout=\"wide\",\n",
+        "    initial_sidebar_state=\"expanded\",\n",
+        ")\n",
+        "\n",
+        "# Language selection dropdown (no typing option)\n",
+        "language = st.sidebar.selectbox(\"Choose Language / भाषा चुनें / భాషను ఎంచుకోండి\",\n",
+        "                                options=[\"English\", \"Hindi\", \"Telugu\"])\n",
+        "\n",
+        "# Text content in different languages\n",
+        "content = {\n",
+        "    \"English\": {\n",
+        "        \"title\": \"🌿 Plant Disease Detection\",\n",
+        "        \"description\": \"Identify plant diseases with high accuracy using AI-powered technology.\",\n",
+        "        \"about_header\": \"About\",\n",
+        "        \"about_content\": \"This app uses a Convolutional Neural Network (CNN) model to detect diseases in plant leaves. The model was trained on a large dataset of plant images and can accurately identify several types of plant diseases.\",\n",
+        "        \"how_to_use_header\": \"How to Use\",\n",
+        "        \"instructions\": [\"1. Upload a clear image of a plant leaf.\",\n",
+        "                         \"2. Wait for the model to process the image.\",\n",
+        "                         \"3. View the predicted disease name on the main screen.\"],\n",
+        "        \"species_header\": \"Available Species\",\n",
+        "        \"species\": [\n",
+        "            \"1. Apple\", \"2. Blueberry\", \"3. Cherry\", \"4. Corn\", \"5. Grape\",\n",
+        "            \"6. Orange\", \"7. Peach\", \"8. Pepper\", \"9. Potato\", \"10. Raspberry\",\n",
+        "            \"11. Soybean\", \"12. Squash\", \"13. Strawberry\", \"14. Tomato\"\n",
+        "        ],\n",
+        "        \"upload_prompt\": \"Choose a leaf image...\",\n",
+        "        \"predicted\": \"Predicted Disease:\",\n",
+        "        \"analyzing\": \"Analyzing... Please wait\",\n",
+        "        \"footer\": \"Powered by RAGHU ENGINEERING COLLEGE | Created by Batch 3 team -CSM\"\n",
+        "    },\n",
+        "    \"Hindi\": {\n",
+        "        \"title\": \"🌿 पौधों के रोग पहचान\",\n",
+        "        \"description\": \"एआई-संचालित तकनीक का उपयोग करके पौधों के रोगों की सटीक पहचान करें।\",\n",
+        "        \"about_header\": \"के बारे में\",\n",
+        "        \"about_content\": \"यह ऐप पौधों की पत्तियों में रोगों का पता लगाने के लिए एक कन्वोल्यूशनल न्यूरल नेटवर्क (CNN) मॉडल का उपयोग करता है।\",\n",
+        "        \"how_to_use_header\": \"कैसे इस्तेमाल करे\",\n",
+        "        \"instructions\": [\"1. पौधे की पत्ती की एक स्पष्ट छवि अपलोड करें।\",\n",
+        "                         \"2. मॉडल के छवि को प्रोसेस करने का इंतजार करें।\",\n",
+        "                         \"3. मुख्य स्क्रीन पर अनुमानित रोग का नाम देखें।\"],\n",
+        "        \"species_header\": \"उपलब्ध प्रजातियां\",\n",
+        "        \"species\": [\n",
+        "            \"1. सेब\", \"2. ब्लूबेरी\", \"3. चेरी\", \"4. मक्का\", \"5. अंगूर\",\n",
+        "            \"6. संतरा\", \"7. आड़ू\", \"8. मिर्च\", \"9. आलू\", \"10. रास्पबेरी\",\n",
+        "            \"11. सोयाबीन\", \"12. स्क्वैश\", \"13. स्ट्रॉबेरी\", \"14. टमाटर\"\n",
+        "        ],\n",
+        "        \"upload_prompt\": \"पत्ती की छवि चुनें...\",\n",
+        "        \"predicted\": \"अनुमानित रोग:\",\n",
+        "        \"analyzing\": \"विश्लेषण हो रहा है... कृपया प्रतीक्षा करें\",\n",
+        "        \"footer\": \"रघु इंजीनियरिंग कॉलेज द्वारा संचालित | बैच 3 टीम - CSM द्वारा निर्मित\"\n",
+        "    },\n",
+        "    \"Telugu\": {\n",
+        "        \"title\": \"🌿 మొక్కల వ్యాధి గుర్తింపు\",\n",
+        "        \"description\": \"AI ఆధారిత సాంకేతికతను ఉపయోగించి మొక్కల వ్యాధులను ఖచ్చితంగా గుర్తించండి.\",\n",
+        "        \"about_header\": \"గురించి\",\n",
+        "        \"about_content\": \"ఈ యాప్ మొక్కల ఆకుల్లో వ్యాధులను గుర్తించడానికి కన్‌వల్యూషనల్ న్యూరల్ నెట్‌వర్క్ (CNN) మోడల్‌ని ఉపయోగిస్తుంది.\",\n",
+        "        \"how_to_use_header\": \"వినియోగించడానికి ఎలా\",\n",
+        "        \"instructions\": [\"1. మొక్క ఆకుని స్పష్టమైన చిత్రం అప్‌లోడ్ చేయండి.\",\n",
+        "                         \"2. మోడల్ చిత్రాన్ని ప్రాసెస్ చేసే వరకు వేచి ఉండండి.\",\n",
+        "                         \"3. ప్రధాన స్క్రీన్‌లో అంచనా వ్యాధి పేరును చూడండి.\"],\n",
+        "        \"species_header\": \"అందుబాటులో ఉన్న జాతులు\",\n",
+        "        \"species\": [\n",
+        "            \"1. ఆపిల్\", \"2. బ్లూబెర్రీ\", \"3. చెర్రీ\", \"4. మొక్కజొన్న\", \"5. ద్రాక్ష\",\n",
+        "            \"6. నారింజ\", \"7. పీచ్\", \"8. పెప్పర్\", \"9. బంగాళాదుంప\", \"10. రాస్ప్బెర్రీ\",\n",
+        "            \"11. సోయాబీన్\", \"12. స్క్వాష్\", \"13. స్ట్రాబెర్రీ\", \"14. టమోటా\"\n",
+        "        ],\n",
+        "        \"upload_prompt\": \"ఒక ఆకు చిత్రాన్ని ఎంచుకోండి...\",\n",
+        "        \"predicted\": \"అంచనా వ్యాధి:\",\n",
+        "        \"analyzing\": \"విశ్లేషణ జరుగుతోంది... దయచేసి వేచి ఉండండి\",\n",
+        "        \"footer\": \"రఘు ఇంజినీరింగ్ కాలేజ్ ద్వారా నిర్వహించబడుతుంది | బ్యాచ్ 3 టీం - CSM ద్వారా రూపొందించబడింది\"\n",
+        "    }\n",
+        "}\n",
+        "\n",
+        "# Add a header and a logo/banner\n",
+        "st.image(\n",
+        "    \"https://st4.depositphotos.com/1054144/24138/i/450/depositphotos_241389492-stock-photo-young-plant-in-sunlight.jpg\",\n",
+        "    width=100)\n",
+        "st.title(content[language][\"title\"])\n",
+        "st.markdown(f\"## {content[language]['description']}\")\n",
+        "\n",
+        "# Sidebar settings\n",
+        "st.sidebar.header(content[language][\"about_header\"])\n",
+        "st.sidebar.markdown(content[language][\"about_content\"])\n",
+        "\n",
+        "st.sidebar.header(content[language][\"how_to_use_header\"])\n",
+        "# Display instructions in a vertical list with numbering\n",
+        "for instruction in content[language][\"instructions\"]:\n",
+        "    st.sidebar.markdown(f\"- {instruction}\")\n",
+        "\n",
+        "st.sidebar.header(content[language][\"species_header\"])\n",
+        "# Display species in a vertical list with numbering\n",
+        "for species in content[language][\"species\"]:\n",
+        "    st.sidebar.markdown(f\"- {species}\")\n",
+        "\n",
+        "# Upload an image file\n",
+        "uploaded_file = st.file_uploader(content[language][\"upload_prompt\"], type=[\"jpg\", \"png\", \"jpeg\"])\n",
+        "\n",
+        "if uploaded_file is not None:\n",
+        "    st.image(uploaded_file, caption=\"Uploaded Image\", use_container_width=False, width=400)\n",
+        "\n",
+        "    try:\n",
+        "        st.write(content[language][\"analyzing\"])\n",
+        "        model = tf.keras.models.load_model(output)\n",
+        "\n",
+        "        def predict_image_class(model, image, class_indices):\n",
+        "            # Open and resize the image\n",
+        "            image = Image.open(image)\n",
+        "            image = image.resize((224, 224))  # Resize to model input size\n",
+        "            image = np.array(image) / 255.0  # Normalize to [0, 1]\n",
+        "            image = np.expand_dims(image, axis=0)  # Add batch dimension\n",
+        "            predictions = model.predict(image)\n",
+        "            predicted_class = np.argmax(predictions, axis=1)\n",
+        "            return predicted_class\n",
+        "\n",
+        "        class_indices = {\n",
+        "            0: 'Apple___Apple_scab',\n",
+        "            1: 'Apple___Black_rot',\n",
+        "            2: 'Apple___Cedar_apple_rust',\n",
+        "            3: 'Apple___healthy',\n",
+        "            4: 'Blueberry___healthy',\n",
+        "            5: 'Cherry___Powdery_mildew',\n",
+        "            6: 'Cherry___healthy',\n",
+        "            7: 'Corn___Cercospora_leaf_spot',\n",
+        "            8: 'Corn___Common_rust',\n",
+        "            9: 'Corn___Northern_Leaf_Blight',\n",
+        "            10: 'Corn___healthy',\n",
+        "            11: 'Grape___Black_rot',\n",
+        "            12: 'Grape___Esca_(Black_Measles)',\n",
+        "            13: 'Grape___Leaf_blight',\n",
+        "            14: 'Grape___healthy',\n",
+        "            15: 'Orange___Citrus_greening',\n",
+        "            16: 'Peach___Bacterial_spot',\n",
+        "            17: 'Peach___healthy',\n",
+        "            18: 'Pepper___Bacterial_spot',\n",
+        "            19: 'Pepper___healthy',\n",
+        "            20: 'Potato___Early_blight',\n",
+        "            21: 'Potato___Late_blight',\n",
+        "            22: 'Potato___healthy',\n",
+        "            23: 'Raspberry___healthy',\n",
+        "            24: 'Soybean___healthy',\n",
+        "            25: 'Squash___Powdery_mildew',\n",
+        "            26: 'Strawberry___Leaf_scorch',\n",
+        "            27: 'Strawberry___healthy',\n",
+        "            28: 'Tomato___Bacterial_spot',\n",
+        "            29: 'Tomato___Early_blight',\n",
+        "            30: 'Tomato___Late_blight',\n",
+        "            31: 'Tomato___Leaf_Mold',\n",
+        "            32: 'Tomato___Septoria_leaf_spot',\n",
+        "            33: 'Tomato___Spider_mites',\n",
+        "            34: 'Tomato___Target_Spot',\n",
+        "            35: 'Tomato___Tomato_Yellow_Leaf_Curl_Virus',\n",
+        "            36: 'Tomato___Tomato_mosaic_virus',\n",
+        "            37: 'Tomato___healthy'\n",
+        "        }\n",
+        "\n",
+        "        predicted_class = predict_image_class(model, uploaded_file, class_indices)\n",
+        "        predicted_class_name = class_indices.get(predicted_class[0], \"Unknown Disease\")\n",
+        "\n",
+        "        st.write(f\"**{content[language]['predicted']}** {predicted_class_name}\")\n",
+        "    except Exception as e:\n",
+        "        st.error(f\"An error occurred: {str(e)}\")\n",
+        "\n",
+        "# Footer with dynamic content\n",
+        "st.markdown(f\"\"\"\n",
+        "<style>\n",
+        "footer {{\n",
+        "    position: fixed;\n",
+        "    bottom: 0;\n",
+        "    left: 0;\n",
+        "    width: 100%;\n",
+        "    background-color: #f1f1f1;\n",
+        "    color: #333;\n",
+        "    text-align: center;\n",
+        "    padding: 10px;\n",
+        "}}\n",
+        "</style>\n",
+        "<footer>\n",
+        "    <p>{content[language][\"footer\"]}</p>\n",
+        "</footer>\n",
+        "\"\"\", unsafe_allow_html=True)\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "J4VfveC9n93V",
+        "outputId": "b3bdf0c4-7b2d-4396-ebfc-76a86273166c"
+      },
+      "execution_count": 2,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "Downloading...\n",
+            "From: https://drive.google.com/uc?id=1rxYyR9wI85nOQ5WfgTBM7jOhINnDLvdS\n",
+            "To: /content/leaf_disease_detection.h5\n",
+            "100%|██████████| 2.16M/2.16M [00:00<00:00, 195MB/s]\n",
+            "2025-02-28 06:56:27.764 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:27.765 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:27.766 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:27.767 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:27.767 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:27.768 WARNING streamlit.runtime.state.session_state_proxy: Session state does not function when running a script without `streamlit run`\n",
+            "2025-02-28 06:56:27.769 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.001 \n",
+            "  \u001b[33m\u001b[1mWarning:\u001b[0m to view this Streamlit app on a browser, run it with the following\n",
+            "  command:\n",
+            "\n",
+            "    streamlit run /usr/local/lib/python3.11/dist-packages/colab_kernel_launcher.py [ARGUMENTS]\n",
+            "2025-02-28 06:56:28.002 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.003 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.004 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.004 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.005 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.006 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.007 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.008 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.008 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.013 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.014 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.015 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.016 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.016 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.017 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.019 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.019 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.020 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.020 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.021 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.021 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.022 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.023 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.023 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.024 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.024 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.025 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.025 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.026 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.026 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.027 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.027 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.028 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.028 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.029 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.029 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.030 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.030 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.031 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.031 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.032 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.032 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.033 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.033 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.034 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.034 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.035 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.035 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.036 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.036 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.037 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.037 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.038 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.038 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.039 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.040 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n",
+            "2025-02-28 06:56:28.041 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.\n"
+          ]
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "DeltaGenerator()"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 2
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "L7uZax2lV3_V"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
